@@ -1,0 +1,13 @@
+[project]
+name = "psp-agent-harness-ding"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "dingyl2001", email = "dingyl@g.ucla.edu" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "flask>=3.1.3",
+    "openai>=3.29.0",
+    "python-dotenv>=1.2.4",
+]

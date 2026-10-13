@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>psp-agent-harness-ding</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.1rem; color: #555; }
+  #log { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; }
+  .msg { padding: 0.6rem 0.9rem; border-radius: 10px; max-width: 85%; white-space: pre-wrap; }
+  .user { align-self: flex-end; background: #2563eb; color: white; }
+  .assistant { align-self: flex-start; background: #f1f5f9; }
+  .tool-card { align-self: flex-start; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 0.9rem; width: 90%; }
+  .tool-card code { display: block; background: #0f172a; color: #e2e8f0; padding: 0.5rem; border-radius: 6px; margin: 0.4rem 0; overflow-x: auto; }
+  .tool-card pre { background: #f8fafc; padding: 0.5rem; border-radius: 6px; overflow-x: auto; max-height: 240px; }
+  .tool-buttons button { margin-right: 0.5rem; padding: 0.3rem 0.8rem; border-radius: 6px; border: none; cursor: pointer; }
+  .approve { background: #16a34a; color: white; }
+  .deny { background: #dc2626; color: white; }
+  .usage { font-size: 0.75rem; color: #94a3b8; align-self: flex-start; }
+  .thinking { align-self: flex-start; color: #94a3b8; font-style: italic; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+  #input-row { display: flex; gap: 0.5rem; }
+  #input-row input { flex: 1; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; }
+  #input-row button { padding: 0.6rem 1.2rem; border-radius: 6px; border: none; background: #2563eb; color: white; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+</style>
+</head>
+<body>
+<h1>psp-agent-harness-ding — one bash tool, asks before running anything</h1>
+<div id="log"></div>
+<div id="input-row">
+  <input id="input" type="text" placeholder="Ask something..." autofocus>
+  <button id="send">Send</button>
+</div>
+
+<script>
+const log = document.getElementById('log');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('send');
+
+function addBubble(role, text) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+function addThinking(text) {
+  const div = document.createElement('div');
+  div.className = 'thinking';
+  div.textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+function addUsage(usage) {
+  if (!usage) return;
+  const div = document.createElement('div');
+  div.className = 'usage';
+  div.textContent = `[tokens: ${usage.prompt_tokens} in, ${usage.cached_tokens} cached, ${usage.completion_tokens} out]`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function addToolCard(call) {
+  const div = document.createElement('div');
+  div.className = 'tool-card';
+  div.innerHTML = `
+    <div>Run this command?</div>
+    <code></code>
+    <div class="tool-buttons">
+      <button class="approve">Approve</button>
+      <button class="deny">Deny</button>
+    </div>
+    <pre style="display:none"></pre>
+  `;
+  div.querySelector('code').textContent = call.command;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+
+  const approveBtn = div.querySelector('.approve');
+  const denyBtn = div.querySelector('.deny');
+  const pre = div.querySelector('pre');
+
+  async function resolve(approved) {
+    approveBtn.disabled = true;
+    denyBtn.disabled = true;
+    const thinking = addThinking(approved ? 'Running command...' : 'Thinking...');
+    const res = await fetch('/resolve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: call.id, approved }),
+    });
+    const data = await res.json();
+    thinking.remove();
+    pre.style.display = 'block';
+    pre.textContent = data.output;
+    if (data.next) {
+      handleResponse(data.next);
+    }
+    // else: other calls from this same assistant turn are still pending
+    // approval, so input stays disabled until the whole turn resolves
+  }
+
+  approveBtn.onclick = () => resolve(true);
+  denyBtn.onclick = () => resolve(false);
+}
+
+function handleResponse(data, thinking) {
+  if (thinking) thinking.remove();
+  if (data.type === 'text') {
+    addBubble('assistant', data.content);
+    addUsage(data.usage);
+    sendBtn.disabled = false;
+    input.disabled = false;
+    input.focus();
+  } else if (data.type === 'pending') {
+    addUsage(data.usage);
+    data.calls.forEach(addToolCard);
+  }
+}
+
+async function send() {
+  const text = input.value.trim();
+  if (!text) return;
+  addBubble('user', text);
+  input.value = '';
+  sendBtn.disabled = true;
+  input.disabled = true;
+  const thinking = addThinking('Thinking...');
+
+  const res = await fetch('/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: text }),
+  });
+  handleResponse(await res.json(), thinking);
+}
+
+sendBtn.onclick = send;
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+</script>
+</body>
+</html>
