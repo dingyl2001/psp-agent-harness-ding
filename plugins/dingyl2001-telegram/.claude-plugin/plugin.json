@@ -1,0 +1,6 @@
+{
+  "name": "dingyl2001-telegram",
+  "version": "0.1.0",
+  "description": "Message the agent from Telegram: send replies, and long-poll for new messages from one configured chat. Week 3 of AI in Research (EPSS 254).",
+  "author": { "name": "dingyl2001" }
+}

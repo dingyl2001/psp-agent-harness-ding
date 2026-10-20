@@ -1,0 +1,6 @@
+{
+  "name": "dingyl2001-energyflux",
+  "version": "0.1.0",
+  "description": "Compute multi-species (proton/alpha/electron) MHD solar wind energy-flux budgets from PSP-style plasma moments, built on Belcher (1971) and Halekas et al. (2023) extended to alpha particles. Week 3 research plugin for AI in Research (EPSS 254).",
+  "author": { "name": "dingyl2001" }
+}

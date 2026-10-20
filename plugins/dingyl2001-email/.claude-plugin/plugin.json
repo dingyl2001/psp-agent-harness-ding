@@ -1,0 +1,6 @@
+{
+  "name": "dingyl2001-email",
+  "version": "0.1.0",
+  "description": "Read and send email for the agent's own Gmail account (IMAP + SMTP). Week 4 of AI in Research (EPSS 254).",
+  "author": { "name": "dingyl2001" }
+}

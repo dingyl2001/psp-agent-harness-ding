@@ -17,7 +17,12 @@ import json
 
 from flask import Flask, jsonify, request, send_from_directory
 
-from harness import SYSTEM_PROMPT, MAX_TOOL_ROUNDS, call_model, run_bash
+from harness import BASH_TOOL, SYSTEM_PROMPT, MAX_TOOL_ROUNDS, call_model, run_bash
+
+# The web UI only offers the built-in bash tool for now; plugin (MCP) tool
+# support was added to the terminal harness (harness.py) and Telegram mode
+# in week 3, not yet ported to this HTTP layer.
+TOOLS = [BASH_TOOL]
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 
@@ -49,7 +54,7 @@ def advance():
                 "content": "(stopped: too many tool-call rounds for one question)"}
 
     STATE["rounds_left"] -= 1
-    msg, usage = call_model(STATE["messages"])
+    msg, usage = call_model(STATE["messages"], TOOLS)
 
     if not msg.tool_calls:
         STATE["messages"].append({"role": "assistant", "content": msg.content})
