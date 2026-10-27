@@ -1,0 +1,5 @@
+{"t": 1793143420.2133162, "kind": "usage", "content": {"prompt_tokens": 565, "cached_tokens": 0, "completion_tokens": 85}}
+{"t": 1793143420.2146912, "kind": "assistant_tool_calls", "content": [{"name": "email__check_inbox", "args": "{\"unread_only\":true,\"limit\":10}"}]}
+{"t": 1793143422.8991702, "kind": "tool_result", "content": {"name": "email__check_inbox", "result": "No unread messages."}}
+{"t": 1793143423.858495, "kind": "usage", "content": {"prompt_tokens": 627, "cached_tokens": 0, "completion_tokens": 29}}
+{"t": 1793143423.859033, "kind": "assistant", "content": "The inbox has **no unread messages**."}

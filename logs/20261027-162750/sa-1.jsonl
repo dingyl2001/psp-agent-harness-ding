@@ -1,0 +1,2 @@
+{"t": 1793143692.9614651, "kind": "usage", "content": {"prompt_tokens": 368, "cached_tokens": 0, "completion_tokens": 337}}
+{"t": 1793143692.9622972, "kind": "assistant_tool_calls", "content": [{"name": "bash", "args": "{\"command\":\"sleep 600 && echo done sleeping\"}"}]}
